@@ -4,6 +4,8 @@ import com.example.kotlin.chat.repository.domain.ContentType
 import com.example.kotlin.chat.repository.domain.Message
 import com.example.kotlin.chat.service.vm.MessageVM
 import com.example.kotlin.chat.service.vm.UserVM
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.map
 import org.intellij.markdown.flavours.commonmark.CommonMarkFlavourDescriptor
 import org.intellij.markdown.html.HtmlGenerator
 import org.intellij.markdown.parser.MarkdownParser
@@ -19,6 +21,9 @@ fun MessageVM.asDomainObject(contentType: ContentType = ContentType.MARKDOWN): M
         id
 )
 
+fun MessageVM.asRendered(contentType: ContentType = ContentType.MARKDOWN): MessageVM =
+        this.copy(content = contentType.render(this.content))
+
 fun Message.asViewModel(): MessageVM = MessageVM(
         contentType.render(content),
         UserVM(username, URL(userAvatarImageLink)),
@@ -26,7 +31,7 @@ fun Message.asViewModel(): MessageVM = MessageVM(
         id
 )
 
-fun List<Message>.mapToViewModel(): List<MessageVM> = map { it.asViewModel() }
+fun Flow<Message>.mapToViewModel(): Flow<MessageVM> = map { it.asViewModel() }
 
 fun ContentType.render(content: String): String = when (this) {
     ContentType.PLAIN -> content
