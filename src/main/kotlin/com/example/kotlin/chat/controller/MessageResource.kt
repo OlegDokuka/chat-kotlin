@@ -15,7 +15,7 @@ import org.springframework.web.bind.annotation.RestController
 class MessageResource(val messageService: MessageService) {
 
     @GetMapping
-    fun latest(@RequestParam(value = "lastMessageId", defaultValue = "") lastMessageId: String): ResponseEntity<List<MessageVM>> {
+    suspend fun latest(@RequestParam(value = "lastMessageId", defaultValue = "") lastMessageId: String): ResponseEntity<List<MessageVM>> {
         val messages = if (lastMessageId.isNotEmpty()) {
             messageService.latestAfter(lastMessageId)
         } else {
@@ -36,7 +36,7 @@ class MessageResource(val messageService: MessageService) {
     }
 
     @PostMapping
-    fun post(@RequestBody message: MessageVM) {
+    suspend fun post(@RequestBody message: MessageVM) {
         messageService.post(message)
     }
 }

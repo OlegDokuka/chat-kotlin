@@ -1,12 +1,13 @@
 package com.example.kotlin.chat.repository
 
 import com.example.kotlin.chat.repository.domain.Message
-import org.springframework.data.jdbc.repository.query.Query
-import org.springframework.data.repository.PagingAndSortingRepository
+import kotlinx.coroutines.flow.Flow
+import org.springframework.data.r2dbc.repository.Query
+import org.springframework.data.repository.kotlin.CoroutineCrudRepository
 import org.springframework.data.repository.query.Param
 
 
-interface MessageRepository : PagingAndSortingRepository<Message, String> {
+interface MessageRepository : CoroutineCrudRepository<Message, String> {
 
     // language=SQL
     @Query("""
@@ -16,7 +17,7 @@ interface MessageRepository : PagingAndSortingRepository<Message, String> {
             LIMIT 10
         ) ORDER BY "SENT"
     """)
-    fun findLatest(): List<Message>
+    fun findLatest(): Flow<Message>
 
     // language=SQL
     @Query("""
@@ -26,5 +27,5 @@ interface MessageRepository : PagingAndSortingRepository<Message, String> {
             ORDER BY "SENT" DESC 
         ) ORDER BY "SENT"
     """)
-    fun findLatest(@Param("id") id: String): List<Message>
+    fun findLatest(@Param("id") id: String): Flow<Message>
 }
