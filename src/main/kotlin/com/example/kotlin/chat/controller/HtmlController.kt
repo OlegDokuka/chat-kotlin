@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.GetMapping
 class HtmlController(val messageService: MessageService) {
 
     @GetMapping("/")
-    fun index(model: Model): String {
+    suspend fun index(model: Model): String {
         val messages: List<MessageVM> = messageService.latest()
 
         model["messages"] = messages

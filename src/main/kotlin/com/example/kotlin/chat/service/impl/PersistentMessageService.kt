@@ -10,15 +10,15 @@ import org.springframework.stereotype.Service
 @Service
 class PersistentMessageService(val messageRepository: MessageRepository) : MessageService {
 
-    override fun latest(): List<MessageVM> =
+    override suspend fun latest(): List<MessageVM> =
             messageRepository.findLatest()
                 .mapToViewModel()
 
-    override fun latestAfter(lastMessageId: String): List<MessageVM> =
+    override suspend fun latestAfter(lastMessageId: String): List<MessageVM> =
             messageRepository.findLatest(lastMessageId)
                 .mapToViewModel()
 
-    override fun post(message: MessageVM) {
+    override suspend fun post(message: MessageVM) {
         messageRepository.save(message.asDomainObject())
     }
 }
