@@ -147,20 +147,15 @@
     })
 
     chatArea.animate({scrollTop: mediaList.height()}, 1);
-    setInterval(function () {
-        $.get("/api/v1/messages", {lastMessageId: lastMessageId}).done(function (data, status, request) {
-            if (data) {
-                data.forEach(function (v) {
-                    mediaList.append(messageTemplate(v));
-                });
 
-                chatArea.stop();
-                chatArea.animate({scrollTop: mediaList.height()}, 500);
-            }
+    var evtSource = new EventSource("/api/v1/messages?lastMessageId=" + lastMessageId);
+    evtSource.onmessage = function(e) {
+        var v = JSON.parse(e.data);
 
-            lastMessageId = request.getResponseHeader('lastMessageId');
-        });
-    }, 1000);
+        mediaList.append(messageTemplate(v));
+        chatArea.stop();
+        chatArea.animate({scrollTop: mediaList.height()}, 500);
+    };
 
     /*]]>*/
 </script>

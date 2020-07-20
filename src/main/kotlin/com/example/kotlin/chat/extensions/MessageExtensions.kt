@@ -19,6 +19,9 @@ fun MessageVM.asDomainObject(contentType: ContentType = ContentType.MARKDOWN): M
         id
 )
 
+fun MessageVM.asRendered(contentType: ContentType = ContentType.MARKDOWN): MessageVM =
+        this.copy(content = contentType.render(this.content))
+
 fun Message.asViewModel(): MessageVM = MessageVM(
         contentType.render(content),
         UserVM(username, URL(userAvatarImageLink)),

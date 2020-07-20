@@ -6,8 +6,10 @@ import com.example.kotlin.chat.repository.domain.ContentType
 import com.example.kotlin.chat.repository.domain.Message
 import com.example.kotlin.chat.service.vm.MessageVM
 import com.example.kotlin.chat.service.vm.UserVM
+import kotlinx.coroutines.channels.ReceiveChannel
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.toList
+import kotlinx.coroutines.reactive.openSubscription
 import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.AfterEach
@@ -17,7 +19,6 @@ import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.ValueSource
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
-import org.springframework.core.ParameterizedTypeReference
 import org.springframework.test.web.reactive.server.WebTestClient
 import java.net.URL
 import java.time.Instant
@@ -87,37 +88,64 @@ class ChatKotlinApplicationTests {
     @ParameterizedTest
     @ValueSource(booleans = [true, false])
     fun `test that messages API returns latest messages`(withLastMessageId: Boolean) {
-        val messages: List<MessageVM>? = client
-                .get()
-                .uri("/api/v1/messages?lastMessageId=${if (withLastMessageId) lastMessageId else ""}")
-                .exchange()
-                .expectBody(object : ParameterizedTypeReference<List<MessageVM>>() {})
-                .returnResult()
-                .responseBody
+        runBlocking {
+            val messages: ReceiveChannel<MessageVM> = client
+                    .get()
+                    .uri("/api/v1/messages?lastMessageId=${if (withLastMessageId) lastMessageId else ""}")
+                    .exchange()
+                    .returnResult(MessageVM::class.java)
+                    .responseBody
+                    .openSubscription()
 
-        if (!withLastMessageId) {
-            assertThat(messages?.map { it.prepareForTesting() })
-                    .first()
-                    .isEqualTo(MessageVM(
-                            "*testMessage*",
+            if (!withLastMessageId) {
+                assertThat(messages.receive().prepareForTesting())
+                        .isEqualTo(MessageVM(
+                                "*testMessage*",
+                                UserVM("test", URL("http://test.com")),
+                                now.minusSeconds(2).truncatedTo(MILLIS)
+                        ))
+            }
+            assertThat(messages.receive().prepareForTesting())
+                    .isEqualTo(
+                            MessageVM(
+                                    "<body><p><strong>testMessage2</strong></p></body>",
+                                    UserVM("test1", URL("http://test.com")),
+                                    now.minusSeconds(1).truncatedTo(MILLIS)
+                            ))
+            assertThat(messages.receive().prepareForTesting())
+                    .isEqualTo(
+                            MessageVM(
+                                    "<body><p><code>testMessage3</code></p></body>",
+                                    UserVM("test2", URL("http://test.com")),
+                                    now.truncatedTo(MILLIS)
+                            )
+                    )
+
+            assertThat(messages.isEmpty)
+                    .isTrue()
+
+            client.post()
+                    .uri("/api/v1/messages")
+                    .bodyValue(MessageVM(
+                            "`HelloWorld`",
                             UserVM("test", URL("http://test.com")),
-                            now.minusSeconds(2).truncatedTo(MILLIS)
+                            now.plusSeconds(1)
                     ))
-        }
+                    .exchange()
+                    .expectStatus()
+                    .is2xxSuccessful
 
-        assertThat(messages?.map { it.prepareForTesting() })
-                .containsSubsequence(
-                        MessageVM(
-                                "<body><p><strong>testMessage2</strong></p></body>",
-                                UserVM("test1", URL("http://test.com")),
-                                now.minusSeconds(1).truncatedTo(MILLIS)
-                        ),
-                        MessageVM(
-                                "<body><p><code>testMessage3</code></p></body>",
-                                UserVM("test2", URL("http://test.com")),
-                                now.truncatedTo(MILLIS)
-                        )
-                )
+            assertThat(messages.receive().prepareForTesting())
+                    .isEqualTo(
+                            MessageVM(
+                                    "<body><p><code>HelloWorld</code></p></body>",
+                                    UserVM("test", URL("http://test.com")),
+                                    now.plusSeconds(1).truncatedTo(MILLIS)
+                            )
+                    )
+
+            messages.cancel()
+        }
     }
 
     @Test
