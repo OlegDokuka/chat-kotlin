@@ -28,6 +28,7 @@ dependencies {
 
 	implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
 	implementation("com.github.javafaker:javafaker:1.0.2")
+	implementation("org.jetbrains:markdown:0.1.45")
 
 	implementation("org.jetbrains.kotlin:kotlin-reflect")
 	implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
