@@ -22,6 +22,9 @@ dependencies {
 	implementation("org.springframework.boot:spring-boot-starter-actuator")
 	implementation("org.springframework.boot:spring-boot-starter-thymeleaf")
 	implementation("org.springframework.boot:spring-boot-starter-web")
+	implementation("org.springframework.boot:spring-boot-starter-data-jdbc")
+
+	runtimeOnly("com.h2database:h2")
 
 	implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
 	implementation("com.github.javafaker:javafaker:1.0.2")
